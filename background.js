@@ -21,54 +21,54 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
         return;
       }
 
-      try {
-        // Fetch valid models
-        const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`;
-        const response = await fetch(url);
-        const data = await response.json();
-        
-        let modelName = 'gemini-1.5-flash';
-        if (response.ok) {
-           const validModels = data.models.filter(m => m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent'));
-           const modelNames = validModels.map(m => m.name.replace('models/', ''));
-           const prefs = ['gemini-1.5-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-flash-001', 'gemini-2.0-flash-exp', 'gemini-1.5-pro', 'gemini-pro'];
-           for (const pref of prefs) {
-             if (modelNames.includes(pref)) { modelName = pref; break; }
-           }
-        }
+      const modelsToTry = [
+        'gemini-2.5-flash',
+        'gemini-2.0-flash',
+        'gemini-1.5-flash',
+        'gemini-1.5-pro',
+        'gemini-1.5-flash-8b',
+        'gemini-pro',
+        'gemini-1.0-pro'
+      ];
 
-        const apiURL = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
-        const body = {
-          contents: [{
-            parts: [{
-              text: `Summarize the following highlighted text concisely and perfectly. Format your ENTIRE response using standard HTML tags (like <ul>, <li>, <strong>, <p>) so it can be directly rendered in a browser. Do NOT wrap your response in markdown code blocks. Make it look beautiful! Here is the content:\n\n${selectedText}`
-            }]
+      const body = {
+        contents: [{
+          parts: [{
+            text: `Summarize the following highlighted text concisely and perfectly. Format your ENTIRE response using standard HTML tags (like <ul>, <li>, <strong>, <p>) so it can be directly rendered in a browser. Do NOT wrap your response in markdown code blocks. Make it look beautiful! Here is the content:\n\n${selectedText}`
           }]
-        };
+        }]
+      };
 
-        const res = await fetch(apiURL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body)
-        });
+      let success = false;
+      let lastError = 'Unknown error';
 
-        const resData = await res.json();
-        
-        if (!res.ok) {
-          throw new Error(resData.error?.message || 'API request failed');
+      for (const model of modelsToTry) {
+        const apiURL = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+        try {
+          const res = await fetch(apiURL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          });
+          const resData = await res.json();
+          
+          if (res.ok && resData.candidates && resData.candidates.length > 0) {
+            let summaryHtml = resData.candidates[0].content.parts[0].text;
+            summaryHtml = summaryHtml.replace(/```html/gi, '').replace(/```/g, '').trim();
+            chrome.tabs.sendMessage(tab.id, { action: "show_summary_result", summary: summaryHtml });
+            success = true;
+            break;
+          }
+          if (resData.error && resData.error.message) {
+            lastError = resData.error.message;
+          }
+        } catch (err) {
+          lastError = err.message;
         }
-        
-        if (!resData.candidates || resData.candidates.length === 0) {
-          throw new Error('No summary generated.');
-        }
+      }
 
-        let summaryHtml = resData.candidates[0].content.parts[0].text;
-        summaryHtml = summaryHtml.replace(/```html/gi, '').replace(/```/g, '').trim();
-
-        chrome.tabs.sendMessage(tab.id, { action: "show_summary_result", summary: summaryHtml });
-
-      } catch (err) {
-        chrome.tabs.sendMessage(tab.id, { action: "show_summary_error", error: err.message });
+      if (!success) {
+        chrome.tabs.sendMessage(tab.id, { action: "show_summary_error", error: `All models failed. Last error: ${lastError}` });
       }
     });
   }

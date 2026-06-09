@@ -49,52 +49,48 @@ saveBtn.addEventListener('click', () => {
   });
 });
 
-// Dynamically get the best available model for this API key
-async function getBestModel(apiKey) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`;
-  const response = await fetch(url);
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.error?.message || 'Failed to fetch models list. Is your API key correct?');
-  }
-
-  const validModels = data.models.filter(m => 
-    m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent')
-  );
-
-  if (validModels.length === 0) {
-    throw new Error('No compatible text generation models found for this API key.');
-  }
-
-  const modelNames = validModels.map(m => m.name.replace('models/', ''));
-
-  // Try to find the best available model in order of preference
-  const preferences = [
+// Core Engine with Automatic Retry
+async function generateWithRetry(apiKey, body) {
+  const modelsToTry = [
+    'gemini-2.5-flash',
+    'gemini-2.0-flash',
     'gemini-1.5-flash',
-    'gemini-1.5-flash-latest',
-    'gemini-1.5-flash-001',
-    'gemini-1.5-flash-002',
-    'gemini-2.0-flash-exp',
     'gemini-1.5-pro',
-    'gemini-1.5-pro-latest',
+    'gemini-1.5-flash-8b',
     'gemini-pro',
     'gemini-1.0-pro'
   ];
 
-  for (const pref of preferences) {
-    if (modelNames.includes(pref)) return pref;
+  let lastError = 'Unknown error';
+  
+  for (const model of modelsToTry) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await response.json();
+
+      if (response.ok && data.candidates && data.candidates.length > 0) {
+        let resultHtml = data.candidates[0].content.parts[0].text;
+        return resultHtml.replace(/```html/gi, '').replace(/```/g, '').trim();
+      }
+      
+      if (data.error && data.error.message) {
+        lastError = data.error.message;
+      }
+    } catch (e) {
+      lastError = e.message;
+    }
   }
 
-  // Fallback to whatever first model supports generation
-  return modelNames[0];
+  throw new Error(`All Gemini models failed. Last error: ${lastError}`);
 }
 
 // Call Gemini API
 async function callGemini(apiKey, pageText, style) {
-  const modelName = await getBestModel(apiKey);
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
-
   let stylePrompt = "Summarise the following webpage content perfectly with clear bullet points.";
   if (style === 'tldr') stylePrompt = "Provide a very short, bare-minimum TL;DR of the following webpage content.";
   if (style === 'eli5') stylePrompt = "Explain the following webpage content simply, as if I were a 5-year-old child.";
@@ -109,29 +105,7 @@ async function callGemini(apiKey, pageText, style) {
     }]
   };
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.error?.message || 'API request failed');
-  }
-
-  if (!data.candidates || data.candidates.length === 0 || !data.candidates[0].content) {
-    throw new Error('No summary generated. The content might have been blocked by safety settings or the model returned empty.');
-  }
-
-  // Extract the text from Gemini's response
-  let resultHtml = data.candidates[0].content.parts[0].text;
-  
-  // Clean up any accidental markdown wrappers the model might add
-  resultHtml = resultHtml.replace(/```html/gi, '').replace(/```/g, '').trim();
-
-  return resultHtml;
+  return await generateWithRetry(apiKey, body);
 }
 
 // Summarise button
@@ -240,9 +214,6 @@ readAloudBtn.addEventListener('click', () => {
 // --- Chat Logic ---
 
 async function chatWithGemini(apiKey, pageText, question) {
-  const modelName = await getBestModel(apiKey);
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
-
   const body = {
     contents: [{
       parts: [{
@@ -251,23 +222,7 @@ async function chatWithGemini(apiKey, pageText, question) {
     }]
   };
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.error?.message || 'API request failed');
-  }
-
-  if (!data.candidates || data.candidates.length === 0) {
-    throw new Error('No answer generated.');
-  }
-
-  return data.candidates[0].content.parts[0].text;
+  return await generateWithRetry(apiKey, body);
 }
 
 chatBtn.addEventListener('click', () => {
