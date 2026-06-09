@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AI Page Summariser</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="container">
+
+    <!-- Header -->
+    <div class="header">
+      <span class="logo">✨</span>
+      <h1>AI Summariser</h1>
+    </div>
+
+    <!-- API Key Setup -->
+    <div class="api-section" id="apiSection">
+      <p class="section-label">Step 1 — Connect Gemini AI</p>
+
+      <a id="studioLink" href="#" class="studio-btn">
+        🔑 Get API Key from Google AI Studio
+      </a>
+
+      <div class="input-row">
+        <input
+          type="password"
+          id="apiKeyInput"
+          placeholder="Paste your API key here..."
+        />
+        <button id="saveBtn">Save</button>
+      </div>
+
+      <p id="statusMsg" class="status"></p>
+    </div>
+
+    <!-- Summarise Button -->
+    <div class="summarise-section">
+      <button id="summariseBtn" class="summarise-btn" disabled>
+        ⚡ Summarise This Page
+      </button>
+    </div>
+
+    <!-- Output Box -->
+    <div id="output" class="output" style="display:none;">
+      <p id="summaryText"></p>
+    </div>
+
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

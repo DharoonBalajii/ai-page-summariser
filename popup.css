@@ -1,0 +1,152 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  width: 360px;
+  font-family: 'Segoe UI', sans-serif;
+  background: #0f0f0f;
+  color: #f0f0f0;
+}
+
+.container {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo {
+  font-size: 24px;
+}
+
+h1 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+/* API Section */
+.api-section {
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.section-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #888;
+}
+
+/* Google AI Studio button */
+.studio-btn {
+  display: block;
+  text-align: center;
+  background: #1e3a5f;
+  color: #7ab3ef;
+  text-decoration: none;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.studio-btn:hover {
+  background: #274d7a;
+}
+
+/* Input + Save row */
+.input-row {
+  display: flex;
+  gap: 8px;
+}
+
+input {
+  flex: 1;
+  background: #111;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 9px 12px;
+  color: #f0f0f0;
+  font-size: 13px;
+  outline: none;
+}
+
+input:focus {
+  border-color: #4f8ef7;
+}
+
+button#saveBtn {
+  background: #4f8ef7;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+button#saveBtn:hover {
+  background: #3a7de0;
+}
+
+/* Status message */
+.status {
+  font-size: 12px;
+  color: #4caf50;
+  min-height: 16px;
+}
+
+/* Summarise button */
+.summarise-btn {
+  width: 100%;
+  padding: 13px;
+  background: linear-gradient(135deg, #6c47ff, #4f8ef7);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.summarise-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.summarise-btn:not(:disabled):hover {
+  opacity: 0.9;
+}
+
+/* Output box */
+.output {
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  padding: 14px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #d4d4d4;
+  max-height: 200px;
+  overflow-y: auto;
+}
