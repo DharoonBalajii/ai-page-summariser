@@ -22,13 +22,9 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
       }
 
       const modelsToTry = [
-        'gemini-2.5-flash',
-        'gemini-2.0-flash',
         'gemini-1.5-flash',
         'gemini-1.5-pro',
-        'gemini-1.5-flash-8b',
-        'gemini-pro',
-        'gemini-1.0-pro'
+        'gemini-1.5-flash-8b'
       ];
 
       const body = {
@@ -59,16 +55,29 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
             success = true;
             break;
           }
+          
+          if (resData.promptFeedback && resData.promptFeedback.blockReason) {
+            throw new Error(`Blocked by Google Safety Filters (Reason: ${resData.promptFeedback.blockReason})`);
+          }
+
           if (resData.error && resData.error.message) {
             lastError = resData.error.message;
+            if (res.status === 400 || res.status === 403 || res.status === 429) {
+              throw new Error(lastError);
+            }
           }
         } catch (err) {
+          if (err.message.includes('Safety') || err.message === lastError) {
+             chrome.tabs.sendMessage(tab.id, { action: "show_summary_error", error: err.message });
+             success = true; // Error reported, don't trigger the fallback error
+             break;
+          }
           lastError = err.message;
         }
       }
 
       if (!success) {
-        chrome.tabs.sendMessage(tab.id, { action: "show_summary_error", error: `All models failed. Last error: ${lastError}` });
+        chrome.tabs.sendMessage(tab.id, { action: "show_summary_error", error: `Models failed. Last error: ${lastError}` });
       }
     });
   }

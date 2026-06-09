@@ -52,13 +52,9 @@ saveBtn.addEventListener('click', () => {
 // Core Engine with Automatic Retry
 async function generateWithRetry(apiKey, body) {
   const modelsToTry = [
-    'gemini-2.5-flash',
-    'gemini-2.0-flash',
     'gemini-1.5-flash',
     'gemini-1.5-pro',
-    'gemini-1.5-flash-8b',
-    'gemini-pro',
-    'gemini-1.0-pro'
+    'gemini-1.5-flash-8b'
   ];
 
   let lastError = 'Unknown error';
@@ -78,15 +74,26 @@ async function generateWithRetry(apiKey, body) {
         return resultHtml.replace(/```html/gi, '').replace(/```/g, '').trim();
       }
       
+      if (data.promptFeedback && data.promptFeedback.blockReason) {
+        throw new Error(`Blocked by Google Safety Filters (Reason: ${data.promptFeedback.blockReason})`);
+      }
+
       if (data.error && data.error.message) {
         lastError = data.error.message;
+        // Don't retry on user errors, auth, or rate limits!
+        if (response.status === 400 || response.status === 403 || response.status === 429) {
+          throw new Error(lastError);
+        }
       }
     } catch (e) {
+      if (e.message.includes('Safety') || e.message === lastError) {
+        throw e; // Propagate critical errors immediately
+      }
       lastError = e.message;
     }
   }
 
-  throw new Error(`All Gemini models failed. Last error: ${lastError}`);
+  throw new Error(`Models failed. Last error: ${lastError}`);
 }
 
 // Call Gemini API
