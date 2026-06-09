@@ -38,9 +38,51 @@ saveBtn.addEventListener('click', () => {
   });
 });
 
+// Dynamically get the best available model for this API key
+async function getBestModel(apiKey) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`;
+  const response = await fetch(url);
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error?.message || 'Failed to fetch models list. Is your API key correct?');
+  }
+
+  const validModels = data.models.filter(m => 
+    m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent')
+  );
+
+  if (validModels.length === 0) {
+    throw new Error('No compatible text generation models found for this API key.');
+  }
+
+  const modelNames = validModels.map(m => m.name.replace('models/', ''));
+
+  // Try to find the best available model in order of preference
+  const preferences = [
+    'gemini-1.5-flash',
+    'gemini-1.5-flash-latest',
+    'gemini-1.5-flash-001',
+    'gemini-1.5-flash-002',
+    'gemini-2.0-flash-exp',
+    'gemini-1.5-pro',
+    'gemini-1.5-pro-latest',
+    'gemini-pro',
+    'gemini-1.0-pro'
+  ];
+
+  for (const pref of preferences) {
+    if (modelNames.includes(pref)) return pref;
+  }
+
+  // Fallback to whatever first model supports generation
+  return modelNames[0];
+}
+
 // Call Gemini API
 async function callGemini(apiKey, pageText) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+  const modelName = await getBestModel(apiKey);
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
 
   const body = {
     contents: [{
