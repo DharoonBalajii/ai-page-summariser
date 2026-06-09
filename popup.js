@@ -38,7 +38,31 @@ saveBtn.addEventListener('click', () => {
   });
 });
 
-// Summarise button — inject content.js and get page text
+// Call Gemini API
+async function callGemini(apiKey, pageText) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+  const body = {
+    contents: [{
+      parts: [{
+        text: `Summarise the following webpage content in 5 clear bullet points. Be concise and focus on the key information:\n\n${pageText}`
+      }]
+    }]
+  };
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+
+  const data = await response.json();
+
+  // Extract the text from Gemini's response
+  return data.candidates[0].content.parts[0].text;
+}
+
+// Summarise button
 summariseBtn.addEventListener('click', () => {
   summariseBtn.textContent = '⏳ Reading page...';
   summariseBtn.disabled = true;
@@ -48,7 +72,7 @@ summariseBtn.addEventListener('click', () => {
     chrome.scripting.executeScript({
       target: { tabId: tabs[0].id },
       files: ['content.js']
-    }, (results) => {
+    }, async (results) => {
       const pageText = results[0].result;
 
       if (!pageText || pageText.length < 50) {
@@ -59,11 +83,22 @@ summariseBtn.addEventListener('click', () => {
         return;
       }
 
-      // ✅ Got the text!
-      summaryText.textContent = '✅ Page content grabbed! (' + pageText.length + ' characters)';
-      output.style.display = 'block';
-      summariseBtn.textContent = '⚡ Summarise This Page';
-      summariseBtn.disabled = false;
+      // Got the text — now call Gemini!
+      summariseBtn.textContent = '🤖 Asking Gemini...';
+
+      chrome.storage.local.get('geminiApiKey', async (result) => {
+        try {
+          const summary = await callGemini(result.geminiApiKey, pageText);
+          summaryText.textContent = summary;
+          output.style.display = 'block';
+        } catch (err) {
+          summaryText.textContent = '❌ Error: ' + err.message;
+          output.style.display = 'block';
+        }
+
+        summariseBtn.textContent = '⚡ Summarise This Page';
+        summariseBtn.disabled = false;
+      });
     });
   });
 });
