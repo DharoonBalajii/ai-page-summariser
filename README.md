@@ -13,7 +13,7 @@ Stop wasting time reading endless articles. Get the gist instantly, ask follow-u
 - **⚡ Instant Summaries**: Click a single button to perfectly summarize the active webpage.
 - **🎯 Customizable Styles**: Choose how you want your information:
   - Bullet Points
-  - Gist (TL;DR)
+  - Gist
   - Explain Like I'm 5
   - Executive Summary
   - Action Items
