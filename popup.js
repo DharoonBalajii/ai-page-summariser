@@ -40,7 +40,7 @@ saveBtn.addEventListener('click', () => {
 
 // Call Gemini API
 async function callGemini(apiKey, pageText) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
 
   const body = {
     contents: [{
