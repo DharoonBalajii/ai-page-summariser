@@ -32,12 +32,26 @@
             <p id="statusMsg" class="status"></p>
         </div>
 
+        <!-- Options Section -->
+        <div class="options-section">
+            <select id="summaryStyle" class="style-select">
+                <option value="bullet_points">Style: Bullet Points</option>
+                <option value="tldr">Style: TL;DR (Short)</option>
+                <option value="eli5">Style: Explain Like I'm 5</option>
+                <option value="executive">Style: Executive Summary</option>
+                <option value="action_items">Style: Action Items</option>
+            </select>
+        </div>
+
         <!-- Summarise Button -->
         <div class="summarise-section">
             <button id="summariseBtn" class="summarise-btn" disabled>
                 ⚡ Summarise This Page
             </button>
         </div>
+        
+        <!-- Time Saved Banner -->
+        <div id="timeSavedBanner" class="time-saved-banner" style="display:none;"></div>
 
         <!-- Output Box -->
         <div id="output" class="output" style="display:none;">

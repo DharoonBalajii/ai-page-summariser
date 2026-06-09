@@ -115,6 +115,41 @@ button#saveBtn:hover {
   min-height: 16px;
 }
 
+/* Options Section */
+.options-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.style-select {
+  width: 100%;
+  background: #111;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 10px;
+  color: #f0f0f0;
+  font-size: 13px;
+  outline: none;
+  cursor: pointer;
+}
+
+.style-select:focus {
+  border-color: #4f8ef7;
+}
+
+/* Time Saved Banner */
+.time-saved-banner {
+  text-align: center;
+  font-size: 12px;
+  color: #4caf50;
+  background: rgba(76, 175, 80, 0.1);
+  padding: 8px;
+  border-radius: 8px;
+  margin-top: 8px;
+  border: 1px solid rgba(76, 175, 80, 0.2);
+}
+
 /* Summarise button */
 .summarise-btn {
   width: 100%;

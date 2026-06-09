@@ -5,6 +5,8 @@ const summariseBtn = document.getElementById('summariseBtn');
 const studioLink = document.getElementById('studioLink');
 const output = document.getElementById('output');
 const summaryText = document.getElementById('summaryText');
+const summaryStyle = document.getElementById('summaryStyle');
+const timeSavedBanner = document.getElementById('timeSavedBanner');
 
 // Open Google AI Studio in a new tab
 studioLink.addEventListener('click', (e) => {
@@ -80,14 +82,20 @@ async function getBestModel(apiKey) {
 }
 
 // Call Gemini API
-async function callGemini(apiKey, pageText) {
+async function callGemini(apiKey, pageText, style) {
   const modelName = await getBestModel(apiKey);
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+
+  let stylePrompt = "Summarise the following webpage content perfectly with clear bullet points.";
+  if (style === 'tldr') stylePrompt = "Provide a very short, bare-minimum TL;DR of the following webpage content.";
+  if (style === 'eli5') stylePrompt = "Explain the following webpage content simply, as if I were a 5-year-old child.";
+  if (style === 'executive') stylePrompt = "Provide a formal, business-oriented Executive Summary of the following webpage content.";
+  if (style === 'action_items') stylePrompt = "Extract a clear checklist of action items or next steps from the following webpage content.";
 
   const body = {
     contents: [{
       parts: [{
-        text: `Summarise the following webpage content perfectly with clear bullet points. Afterwards, provide an attractive and engaging short summarisation at the end. Format your ENTIRE response using standard HTML tags (like <ul>, <li>, <strong>, <h3>, <p>) so it can be directly rendered in a browser. Do NOT wrap your response in markdown code blocks. Make the summary look beautiful! Here is the content:\n\n${pageText}`
+        text: `${stylePrompt} Afterwards, provide an attractive and engaging short summarisation at the end. Format your ENTIRE response using standard HTML tags (like <ul>, <li>, <strong>, <h3>, <p>) so it can be directly rendered in a browser. Do NOT wrap your response in markdown code blocks. Make the summary look beautiful! Here is the content:\n\n${pageText}`
       }]
     }]
   };
@@ -143,12 +151,22 @@ summariseBtn.addEventListener('click', () => {
 
       chrome.storage.local.get('geminiApiKey', async (result) => {
         try {
-          const summary = await callGemini(result.geminiApiKey, pageText);
+          const selectedStyle = summaryStyle.value;
+          const summary = await callGemini(result.geminiApiKey, pageText, selectedStyle);
+          
           summaryText.innerHTML = summary; // Render the HTML formatting
           output.style.display = 'block';
+
+          // Calculate time saved (Average reading speed: 200 wpm)
+          const wordCount = pageText.split(/\s+/).length;
+          const readingTimeMinutes = Math.ceil(wordCount / 200);
+          timeSavedBanner.textContent = `🎉 You just saved ~${readingTimeMinutes} minutes of reading!`;
+          timeSavedBanner.style.display = 'block';
+
         } catch (err) {
           summaryText.textContent = '❌ Error: ' + err.message;
           output.style.display = 'block';
+          timeSavedBanner.style.display = 'none';
         }
 
         summariseBtn.textContent = '⚡ Summarise This Page';
