@@ -7,6 +7,9 @@ const output = document.getElementById('output');
 const summaryText = document.getElementById('summaryText');
 const summaryStyle = document.getElementById('summaryStyle');
 const timeSavedBanner = document.getElementById('timeSavedBanner');
+const copyBtn = document.getElementById('copyBtn');
+const downloadBtn = document.getElementById('downloadBtn');
+const readAloudBtn = document.getElementById('readAloudBtn');
 
 // Open Google AI Studio in a new tab
 studioLink.addEventListener('click', (e) => {
@@ -174,4 +177,55 @@ summariseBtn.addEventListener('click', () => {
       });
     });
   });
+});
+
+// --- Action Buttons Logic ---
+
+// Copy to Clipboard
+copyBtn.addEventListener('click', () => {
+  const text = summaryText.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    copyBtn.textContent = '✅ Copied!';
+    setTimeout(() => { copyBtn.textContent = '📋 Copy'; }, 2000);
+  });
+});
+
+// Download as Text File
+downloadBtn.addEventListener('click', () => {
+  const text = summaryText.innerText;
+  const blob = new Blob([text], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'AI_Summary.txt';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+// Read Aloud (Text-to-Speech)
+let isSpeaking = false;
+readAloudBtn.addEventListener('click', () => {
+  if (isSpeaking) {
+    speechSynthesis.cancel();
+    isSpeaking = false;
+    readAloudBtn.textContent = '🔊 Listen';
+    readAloudBtn.classList.remove('active');
+    return;
+  }
+  
+  const text = summaryText.innerText;
+  if (!text) return;
+
+  const utterance = new SpeechSynthesisUtterance(text);
+  
+  utterance.onend = () => {
+    isSpeaking = false;
+    readAloudBtn.textContent = '🔊 Listen';
+    readAloudBtn.classList.remove('active');
+  };
+  
+  speechSynthesis.speak(utterance);
+  isSpeaking = true;
+  readAloudBtn.textContent = '⏹️ Stop';
+  readAloudBtn.classList.add('active');
 });
