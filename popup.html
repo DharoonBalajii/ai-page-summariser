@@ -1,52 +1,64 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>AI Page Summariser</title>
-  <link rel="stylesheet" href="popup.css" />
-</head>
-<body>
-  <div class="container">
+const apiKeyInput = document.getElementById('apiKeyInput');
+const saveBtn = document.getElementById('saveBtn');
+const statusMsg = document.getElementById('statusMsg');
+const summariseBtn = document.getElementById('summariseBtn');
+const studioLink = document.getElementById('studioLink');
+const output = document.getElementById('output');
+const summaryText = document.getElementById('summaryText');
 
-    <!-- Header -->
-    <div class="header">
-      <span class="logo">✨</span>
-      <h1>AI Summariser</h1>
-    </div>
+// Open Google AI Studio in a new tab
+studioLink.addEventListener('click', (e) => {
+e.preventDefault();
+chrome.tabs.create({ url: 'https://aistudio.google.com/app/apikey' });
+});
 
-    <!-- API Key Setup -->
-    <div class="api-section" id="apiSection">
-      <p class="section-label">Step 1 — Connect Gemini AI</p>
+// On popup open — check if API key already saved
+chrome.storage.local.get('geminiApiKey', (result) => {
+if (result.geminiApiKey) {
+statusMsg.textContent = '✅ API key saved!';
+summariseBtn.disabled = false;
+}
+});
 
-      <a id="studioLink" href="#" class="studio-btn">
-        🔑 Get API Key from Google AI Studio
-      </a>
+// Save API key
+saveBtn.addEventListener('click', () => {
+const key = apiKeyInput.value.trim();
 
-      <div class="input-row">
-        <input
-          type="password"
-          id="apiKeyInput"
-          placeholder="Paste your API key here..."
-        />
-        <button id="saveBtn">Save</button>
-      </div>
+if (!key) {
+statusMsg.style.color = '#e57373';
+statusMsg.textContent = '⚠️ Please paste an API key first.';
+return;
+}
 
-      <p id="statusMsg" class="status"></p>
-    </div>
+chrome.storage.local.set({ geminiApiKey: key }, () => {
+statusMsg.style.color = '#4caf50';
+statusMsg.textContent = '✅ API key saved!';
+summariseBtn.disabled = false;
+apiKeyInput.value = '';
+});
+});
 
-    <!-- Summarise Button -->
-    <div class="summarise-section">
-      <button id="summariseBtn" class="summarise-btn" disabled>
-        ⚡ Summarise This Page
-      </button>
-    </div>
+// Summarise button — inject content.js into the page
+summariseBtn.addEventListener('click', () => {
+summariseBtn.textContent = '⏳ Reading page...';
+summariseBtn.disabled = true;
+output.style.display = 'none';
 
-    <!-- Output Box -->
-    <div id="output" class="output" style="display:none;">
-      <p id="summaryText"></p>
-    </div>
+chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+chrome.scripting.executeScript({
+target: { tabId: tabs[0].id },
+files: ['content.js']
+});
+});
+});
 
-  </div>
-  <script src="popup.js"></script>
-</body>
-</html>
+// Listen for page content coming back from content.js
+chrome.runtime.onMessage.addListener((message) => {
+if (message.type === 'PAGE_CONTENT') {
+const pageText = message.content;
+
+if (!pageText || pageText.length < 50) { summaryText.textContent='⚠️ Could not read enough content from this page.' ;
+    output.style.display='block' ; summariseBtn.textContent='⚡ Summarise This Page' ; summariseBtn.disabled=false;
+    return; } // ✅ Got the text — show confirmation for now summaryText.textContent='✅ Page content grabbed! (' +
+    pageText.length + ' characters)' ; output.style.display='block' ; summariseBtn.textContent='⚡ Summarise This Page' ;
+    summariseBtn.disabled=false; } });
