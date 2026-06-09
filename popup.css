@@ -269,3 +269,58 @@ button#saveBtn:hover {
   border-color: #4caf50;
   color: #fff;
 }
+
+/* Chat Section */
+.chat-section {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #2a2a2a;
+}
+
+.chat-history {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.chat-msg {
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+  word-wrap: break-word;
+}
+
+.chat-msg.user {
+  background: #1e3a5f;
+  color: #e0e0e0;
+  align-self: flex-end;
+  border-bottom-right-radius: 2px;
+  margin-left: 20px;
+}
+
+.chat-msg.ai {
+  background: #222;
+  border: 1px solid #333;
+  color: #e0e0e0;
+  align-self: flex-start;
+  border-bottom-left-radius: 2px;
+  margin-right: 20px;
+}
+
+button#chatBtn {
+  background: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+button#chatBtn:hover {
+  background: #45a049;
+}

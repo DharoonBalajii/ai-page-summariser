@@ -11,6 +11,12 @@ const copyBtn = document.getElementById('copyBtn');
 const downloadBtn = document.getElementById('downloadBtn');
 const readAloudBtn = document.getElementById('readAloudBtn');
 
+const chatInput = document.getElementById('chatInput');
+const chatBtn = document.getElementById('chatBtn');
+const chatHistory = document.getElementById('chatHistory');
+
+let globalPageText = ''; // Store context for chat
+
 // Open Google AI Studio in a new tab
 studioLink.addEventListener('click', (e) => {
   e.preventDefault();
@@ -140,6 +146,7 @@ summariseBtn.addEventListener('click', () => {
       files: ['content.js']
     }, async (results) => {
       const pageText = results[0].result;
+      globalPageText = pageText; // Save for chat context
 
       if (!pageText || pageText.length < 50) {
         summaryText.textContent = '⚠️ Could not read enough content from this page.';
@@ -228,4 +235,75 @@ readAloudBtn.addEventListener('click', () => {
   isSpeaking = true;
   readAloudBtn.textContent = '⏹️ Stop';
   readAloudBtn.classList.add('active');
+});
+
+// --- Chat Logic ---
+
+async function chatWithGemini(apiKey, pageText, question) {
+  const modelName = await getBestModel(apiKey);
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+
+  const body = {
+    contents: [{
+      parts: [{
+        text: `You are an AI assistant helping the user understand a webpage. Based ONLY on the following webpage content, answer the user's question concisely. If the answer is not in the content, say so.\n\nContent:\n${pageText}\n\nQuestion: ${question}`
+      }]
+    }]
+  };
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error?.message || 'API request failed');
+  }
+
+  if (!data.candidates || data.candidates.length === 0) {
+    throw new Error('No answer generated.');
+  }
+
+  return data.candidates[0].content.parts[0].text;
+}
+
+chatBtn.addEventListener('click', () => {
+  const question = chatInput.value.trim();
+  if (!question || !globalPageText) return;
+
+  // Add user message to UI
+  const userMsg = document.createElement('div');
+  userMsg.className = 'chat-msg user';
+  userMsg.textContent = question;
+  chatHistory.appendChild(userMsg);
+  
+  chatInput.value = '';
+  chatBtn.textContent = '...';
+  chatBtn.disabled = true;
+
+  chrome.storage.local.get('geminiApiKey', async (result) => {
+    try {
+      const answer = await chatWithGemini(result.geminiApiKey, globalPageText, question);
+      
+      const aiMsg = document.createElement('div');
+      aiMsg.className = 'chat-msg ai';
+      aiMsg.textContent = answer;
+      chatHistory.appendChild(aiMsg);
+      
+      // Scroll to bottom
+      const outputDiv = document.getElementById('output');
+      outputDiv.scrollTop = outputDiv.scrollHeight;
+    } catch (err) {
+      const aiMsg = document.createElement('div');
+      aiMsg.className = 'chat-msg ai';
+      aiMsg.textContent = '❌ ' + err.message;
+      chatHistory.appendChild(aiMsg);
+    }
+    
+    chatBtn.textContent = 'Ask';
+    chatBtn.disabled = false;
+  });
 });
