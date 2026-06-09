@@ -40,12 +40,12 @@ saveBtn.addEventListener('click', () => {
 
 // Call Gemini API
 async function callGemini(apiKey, pageText) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
   const body = {
     contents: [{
       parts: [{
-        text: `Summarise the following webpage content in 5 clear bullet points. Be concise and focus on the key information:\n\n${pageText}`
+        text: `Summarise the following webpage content perfectly with clear bullet points. Afterwards, provide an attractive and engaging short summarisation at the end. Format your ENTIRE response using standard HTML tags (like <ul>, <li>, <strong>, <h3>, <p>) so it can be directly rendered in a browser. Do NOT wrap your response in markdown code blocks. Make the summary look beautiful! Here is the content:\n\n${pageText}`
       }]
     }]
   };
@@ -58,8 +58,21 @@ async function callGemini(apiKey, pageText) {
 
   const data = await response.json();
 
+  if (!response.ok) {
+    throw new Error(data.error?.message || 'API request failed');
+  }
+
+  if (!data.candidates || data.candidates.length === 0 || !data.candidates[0].content) {
+    throw new Error('No summary generated. The content might have been blocked by safety settings or the model returned empty.');
+  }
+
   // Extract the text from Gemini's response
-  return data.candidates[0].content.parts[0].text;
+  let resultHtml = data.candidates[0].content.parts[0].text;
+  
+  // Clean up any accidental markdown wrappers the model might add
+  resultHtml = resultHtml.replace(/```html/gi, '').replace(/```/g, '').trim();
+
+  return resultHtml;
 }
 
 // Summarise button
@@ -89,7 +102,7 @@ summariseBtn.addEventListener('click', () => {
       chrome.storage.local.get('geminiApiKey', async (result) => {
         try {
           const summary = await callGemini(result.geminiApiKey, pageText);
-          summaryText.textContent = summary;
+          summaryText.innerHTML = summary; // Render the HTML formatting
           output.style.display = 'block';
         } catch (err) {
           summaryText.textContent = '❌ Error: ' + err.message;

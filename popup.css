@@ -143,10 +143,58 @@ button#saveBtn:hover {
   background: #1a1a1a;
   border: 1px solid #2a2a2a;
   border-radius: 12px;
-  padding: 14px;
-  font-size: 13px;
+  padding: 16px;
+  font-size: 14px;
   line-height: 1.6;
-  color: #d4d4d4;
-  max-height: 200px;
+  color: #e0e0e0;
+  max-height: 250px;
   overflow-y: auto;
+  box-shadow: inset 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.output ul {
+  margin-left: 20px;
+  margin-bottom: 16px;
+}
+
+.output li {
+  margin-bottom: 8px;
+  color: #d4d4d4;
+}
+
+.output li strong {
+  color: #7ab3ef;
+}
+
+.output h3, .output h4 {
+  color: #4f8ef7;
+  margin-top: 16px;
+  margin-bottom: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.output p {
+  margin-bottom: 12px;
+}
+
+.output p:last-child {
+  margin-bottom: 0;
+}
+
+/* Custom Scrollbar for Output */
+.output::-webkit-scrollbar {
+  width: 6px;
+}
+.output::-webkit-scrollbar-track {
+  background: #1a1a1a;
+  border-radius: 12px;
+}
+.output::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 12px;
+}
+.output::-webkit-scrollbar-thumb:hover {
+  background: #666;
 }
