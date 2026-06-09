@@ -1,29 +1,20 @@
 function extractPageContent() {
-  // Prefer the main content area if available, otherwise use the body
-  let mainElement = document.querySelector('article') || document.querySelector('main') || document.body;
-  const clone = mainElement.cloneNode(true);
-
-  // Remove common noisy elements like scripts, navbars, and footers
-  const unwanted = clone.querySelectorAll(
-    'script, style, noscript, nav, footer, header, iframe, aside, .sidebar, #sidebar'
-  );
-  unwanted.forEach(el => el.remove());
-
-  // Extract alt text from images so the AI knows what's in the pictures!
-  const images = clone.querySelectorAll('img');
+  // 1. Get the visible text of the entire page exactly as rendered
+  let text = document.body.innerText || document.body.textContent || '';
+  
+  // 2. Collect image alt texts safely without modifying the live webpage
+  const images = document.querySelectorAll('img');
+  let imageDescriptions = [];
   images.forEach(img => {
     if (img.alt && img.alt.trim() !== '') {
-      const altText = document.createTextNode(` [Image: ${img.alt}] `);
-      if (img.parentNode) {
-        img.parentNode.replaceChild(altText, img);
-      }
-    } else {
-      if (img.parentNode) img.remove(); // Remove images without alt text to save space
+      imageDescriptions.push(`[Image: ${img.alt.trim()}]`);
     }
   });
 
-  let text = clone.innerText || clone.textContent || '';
-  
+  if (imageDescriptions.length > 0) {
+    text += "\n\n--- Visuals on this page ---\n" + imageDescriptions.join("\n");
+  }
+
   // Clean up extra whitespace and newlines
   text = text.replace(/\s+/g, ' ').trim();
   
